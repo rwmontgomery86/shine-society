@@ -1,0 +1,95 @@
+"use client";
+
+import { useState } from "react";
+import { CheckIcon } from "@/components/ui/CheckIcon";
+import { SectionHead } from "@/components/ui/SectionHead";
+import { memberships, membershipRules } from "@/components/content/site";
+
+type V = "sedan" | "suv";
+
+export function Memberships() {
+  const [v, setV] = useState<V>("sedan");
+
+  return (
+    <section className="ss-section" id="memberships">
+      <SectionHead num="03" kicker="Membership" title="Keep it shining. Monthly." />
+
+      <div className="ss-mem__toolbar">
+        <p>Designed for Senoia, GA customers. One visit per month, every month.</p>
+        <div className="ss-toggle" role="tablist" aria-label="Vehicle size">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={v === "sedan"}
+            className={v === "sedan" ? "is-on" : ""}
+            onClick={() => setV("sedan")}
+          >
+            Sedan
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={v === "suv"}
+            className={v === "suv" ? "is-on" : ""}
+            onClick={() => setV("suv")}
+          >
+            Truck / SUV
+          </button>
+          <span className="ss-toggle__pill" data-pos={v} aria-hidden="true" />
+        </div>
+      </div>
+
+      <div className="ss-mem">
+        {memberships.map((t) => (
+          <article
+            key={t.id}
+            className={"ss-tier" + (t.featured ? " is-featured" : "")}
+          >
+            {t.featured && <span className="ss-tier__ribbon">Best Seller</span>}
+            <div className="ss-tier__head">
+              <span className="ss-tier__kicker">{t.kicker}</span>
+              <h3 className="ss-tier__name">{t.name}</h3>
+            </div>
+            <div className="ss-tier__price">
+              <span className="ss-tier__amt">
+                <span className="curr">$</span>
+                <span className="num">{v === "sedan" ? t.sedan : t.suv}</span>
+              </span>
+              <span className="ss-tier__per">
+                / month
+                <br />
+                <em>{v === "sedan" ? "Sedan" : "Truck / SUV"}</em>
+              </span>
+            </div>
+            <ul className="ss-tier__list">
+              {t.bullets.map((b, i) => (
+                <li key={i}>
+                  <CheckIcon />
+                  {b}
+                </li>
+              ))}
+            </ul>
+            <a
+              href={`#book?tier=${t.id}`}
+              className={
+                "ss-btn " +
+                (t.featured ? "ss-btn--solid" : "ss-btn--ghost") +
+                " ss-btn--block"
+              }
+            >
+              Start {t.name}
+            </a>
+          </article>
+        ))}
+      </div>
+
+      <ul className="ss-mem__rules">
+        {membershipRules.map((r) => (
+          <li key={r.text}>
+            <span aria-hidden="true">{r.sym}</span> {r.text}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
