@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shine Society Detailing — marketing site
 
-## Getting Started
+Next.js 16 (App Router, Turbopack) single-page marketing site for Shine Society Detailing in Senoia, GA.
 
-First, run the development server:
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
+npm run build   # must pass with zero TS / ESLint errors
+npm run start   # serve the production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and fill in the Urable CRM credentials.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable               | Required | Used by                  | Notes                                                                 |
+| ---------------------- | -------- | ------------------------ | --------------------------------------------------------------------- |
+| `URABLE_ACCESS_TOKEN`  | yes      | `app/api/lead/route.ts`  | Server-side only. **Never** prefix with `NEXT_PUBLIC_`.               |
+| `URABLE_API_BASE_URL`  | yes      | `app/api/lead/route.ts`  | e.g. `https://api.urable.com`. The route appends `/v1/customers`.     |
+| `NEXT_PUBLIC_SITE_URL` | no       | `app/layout.tsx`         | Used as `metadataBase` for OG tags. Falls back to `http://localhost:3000`. |
 
-## Learn More
+On Vercel: **Project → Settings → Environment Variables**. Add the two Urable vars for Production and Preview scopes. After saving, redeploy so the new values take effect.
 
-To learn more about Next.js, take a look at the following resources:
+> **Before launch:** the Urable endpoint in `lib/urable.ts` is a placeholder. Verify the exact endpoint and payload shape in the client's Urable API Explorer and adjust that one file. No other code needs to change.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `app/page.tsx` — section order (single-page site).
+- `app/api/lead/route.ts` — server-side proxy that forwards form submissions to Urable.
+- `components/sections/` — section components rendered in `page.tsx`.
+- `components/content/site.ts` — all copy (services, memberships, FAQ, form labels, etc.). Don't hardcode strings in JSX.
+- `lib/validate.ts` — server-side lead validation.
+- `lib/urable.ts` — Urable CRM client + note formatter.
+- `lib/analytics.ts` — SSR-safe gtag wrapper.
+- `app/prototype.css` — design-system CSS (do not modify).
+- `app/globals.css` — additions / overrides layered on top of the prototype.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `CLAUDE.md` for conventions and the ship workflow.

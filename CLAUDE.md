@@ -28,12 +28,15 @@ Production Next.js build for **Shine Society Detailing**, a 1-year-old mobile ca
 
 ## Intentionally mocked — do NOT wire a backend without asking
 
-- **`BookingCTA`** form submit shows a success state only. No real endpoint. CMS wiring deferred.
-- **Memberships** "Start [tier]" buttons route to `#book?tier=…`. **No Stripe.** Will be wired in phase 2.
+- **Memberships** "Start [tier]" tiles route to `#book?tier=…` — the booking form reads the hash, preselects the Membership service, and records the tier on the lead. **No Stripe checkout yet** — that comes in phase 2.
 - **Testimonials** are placeholder text (Marcus T., Jenna R., Cole H.). Owner's Google Business share link 404'd; need real reviews.
 - **EST. year** is hardcoded "2025" — owner is in year 1 of business as of 2026, hasn't confirmed exact founding date.
 
 If you're tempted to "fix" these by wiring a real integration, stop and ask first.
+
+## Lead capture (wired)
+
+`BookingCTA` submits to `POST /api/lead` (`app/api/lead/route.ts`). The route validates with `lib/validate.ts`, then forwards to Urable via `lib/urable.ts`. The Urable access token is server-side only (`URABLE_ACCESS_TOKEN`) — **never** prefix it with `NEXT_PUBLIC_`. Note formatting lives in `formatNote(lead)`. Honeypot field `companyWebsite` is checked before validation; bot submissions get a silent 200. See `README.md` for env setup.
 
 ## Open content TODOs (need owner input before launch)
 
@@ -43,6 +46,7 @@ Search the codebase for `TODO:` to find them in context. The big ones:
 - **Time estimates** per service per vehicle size. Owner said the Menu PDF would include them but it didn't.
 - **Real Google Reviews** — replace the 3 placeholders in `testimonials[]`.
 - **BeforeAfter context copy** in `BeforeAfter.tsx` describes "recent details" generically; replace with the actual job context per photo pair.
+- **Verify Urable endpoint + payload** in the client's Urable API Explorer before production. The placeholder in `lib/urable.ts` posts to `${base}/v1/customers` with `{name, phone, email, notes}` — adjust to match real spec.
 
 ## Owner facts that drive content + design decisions
 

@@ -318,3 +318,61 @@ export const serviceOptions = [
 ] as const;
 
 export const dayOptions = ["This week", "Next week", "Flexible"] as const;
+
+export const contactMethodOptions = ["Text", "Call", "Email"] as const;
+
+export const utmKeys = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+  "gclid",
+  "fbclid",
+] as const;
+
+export const bookingCopy = {
+  leadParagraph:
+    "Tell us a little about your ride. We’ll text you back with a slot — usually within an hour during business hours.",
+  finePrint:
+    "By submitting, you agree to receive a text reply at the number above. 24-hour notice for reschedules; same-day cancellations may forfeit the 10% deposit on ceramic / paint correction work.",
+  submitIdle: "Request a slot →",
+  submitSending: "Sending…",
+  submitSent: "✓ Request received",
+  successHeadline: "Got it — talk soon.",
+  successBody:
+    "We’ll text you shortly to confirm details and availability. If you don’t hear back within an hour during business hours, call or text 706-938-8694.",
+  errorHeadline: "Something went wrong.",
+  errorBody:
+    "Your request didn’t go through. Please try again, or text/call 706-938-8694 directly.",
+  tierChipPrefix: "Tier:",
+} as const;
+
+export const bookingFieldLabels = {
+  name: { label: "Your name", placeholder: "First & last" },
+  phone: { label: "Phone", placeholder: "(404) 555-0188" },
+  email: { label: "Email (optional)", placeholder: "you@example.com" },
+  city: { label: "City or ZIP", placeholder: "Senoia, 30276" },
+  vehicleYear: { label: "Year", placeholder: "2022" },
+  vehicleMake: { label: "Make", placeholder: "Ford" },
+  vehicleModel: { label: "Model", placeholder: "F-150" },
+  notes: {
+    label: "Anything else?",
+    placeholder:
+      "Pets? Pet hair? Tar? Headlights cloudy? Tell us what we’re walking into.",
+  },
+} as const;
+
+export const bookingErrorMessages = {
+  nameRequired: "Please enter your name.",
+  phoneRequired: "We need a phone number to text you back.",
+  phoneInvalid: "That phone number doesn’t look right.",
+  emailInvalid: "That email doesn’t look right.",
+  emailRequiredForContact: "Add an email if you’d prefer email contact.",
+  vehicleSizeRequired: "Pick a vehicle size.",
+  serviceRequired: "Pick a service.",
+  dayRequired: "Pick a timing window.",
+  contactMethodRequired: "Pick a contact method.",
+  vehicleYearInvalid: "Use a 4-digit year.",
+  generic: "Please check the highlighted fields.",
+} as const;

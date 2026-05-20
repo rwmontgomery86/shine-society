@@ -339,6 +339,81 @@
   .ss-hero-type__corner { display: none; }
 }
 
+/* ===== Booking form additions ===== */
+.ss-book__triple {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 480px) {
+  .ss-book__triple { grid-template-columns: 1fr 1fr; }
+  .ss-book__triple > :last-child { grid-column: span 2; }
+}
+.ss-field__err {
+  margin: 0;
+  font-size: 12px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+.ss-book__alert {
+  grid-column: span 2;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-soft);
+  background: color-mix(in oklab, var(--accent) 8%, transparent);
+  color: var(--ink);
+}
+.ss-book__alert strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: 0.01em;
+  margin-bottom: 4px;
+}
+.ss-book__alert p { margin: 0; font-size: 14px; color: var(--ink-dim); }
+.ss-book__tier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.ss-book__form--done {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+.ss-book__success-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: 0.01em;
+  margin: 0;
+  color: var(--ink);
+}
+.ss-book__success-body {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+.ss-book__form button[type="submit"]:disabled {
+  opacity: 0.65;
+  cursor: progress;
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ss-marquee__track,
   .ss-pin circle:nth-child(2),
