@@ -348,6 +348,18 @@ export const bookingCopy = {
   tierChipPrefix: "Tier:",
 } as const;
 
+// Copy shown only when a membership tier is preselected (booking form arrived
+// via #book?tier=…). Payment is not collected on the site — Urable handles
+// the quote → card-on-file → recurring billing flow after the first detail.
+// `{tier}` is replaced with the tier display name (e.g., "Premium").
+// (The in-form notice is now the receipt-style MembershipBanner component;
+// these strings drive the post-submit success state copy.)
+export const membershipBookingCopy = {
+  successHeadline: "Got it — welcome to the {tier} plan.",
+  successBody:
+    "We’ll text you shortly to confirm your first detail. After that visit, we’ll send a quick quote in Urable to set up your card on file — auto-pay kicks in from there. Questions? Call or text 706-938-8694.",
+} as const;
+
 export const bookingFieldLabels = {
   name: { label: "Your name", placeholder: "First & last" },
   phone: { label: "Phone", placeholder: "(404) 555-0188" },

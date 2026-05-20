@@ -1,14 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckIcon } from "@/components/ui/CheckIcon";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { memberships, membershipRules } from "@/components/content/site";
 
 type V = "sedan" | "suv";
 
+function parseTierFromHash(hash: string): string | null {
+  if (!hash) return null;
+  const q = hash.indexOf("?");
+  if (q < 0) return null;
+  return new URLSearchParams(hash.slice(q + 1)).get("tier");
+}
+
 export function Memberships() {
   const [v, setV] = useState<V>("sedan");
+  const [selectedTier, setSelectedTier] = useState<string | null>(null);
+
+  useEffect(() => {
+    const read = () => setSelectedTier(parseTierFromHash(window.location.hash));
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
 
   return (
     <section className="ss-section" id="memberships">
@@ -43,7 +58,12 @@ export function Memberships() {
         {memberships.map((t) => (
           <article
             key={t.id}
-            className={"ss-tier" + (t.featured ? " is-featured" : "")}
+            className={
+              "ss-tier" +
+              (t.featured ? " is-featured" : "") +
+              (selectedTier === t.id ? " is-selected" : "")
+            }
+            aria-current={selectedTier === t.id ? "true" : undefined}
           >
             {t.featured && <span className="ss-tier__ribbon">Best Seller</span>}
             <div className="ss-tier__head">
@@ -76,6 +96,19 @@ export function Memberships() {
                 (t.featured ? "ss-btn--solid" : "ss-btn--ghost") +
                 " ss-btn--block"
               }
+              onClick={(e) => {
+                // Override the native fragment jump (the `book?tier=…` id
+                // doesn't exist) with a controlled flow: update the URL via
+                // pushState, dispatch hashchange so BookingCTA + tile state
+                // both react, then smooth-scroll to the booking section.
+                e.preventDefault();
+                history.pushState(null, "", `#book?tier=${t.id}`);
+                window.dispatchEvent(new Event("hashchange"));
+                document.getElementById("book")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }}
             >
               Start {t.name}
             </a>

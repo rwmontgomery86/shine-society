@@ -108,9 +108,34 @@ function buildSections(lead: Lead): Section[] {
 }
 
 export function formatNote(lead: Lead): string {
-  return buildSections(lead)
+  const body = buildSections(lead)
     .map((s) => (s.lines.length ? [s.heading, ...s.lines].join("\n") : s.heading))
     .join("\n\n");
+
+  const t = tierName(lead.tier);
+  if (!t) return body;
+
+  // Surface membership intent at the very top of the note so the owner spots
+  // it the instant they open the customer in Urable and knows to create a
+  // Quote (not just schedule a one-off detail).
+  return `*** MEMBERSHIP INQUIRY — ${t} ***\n\n${body}`;
+}
+
+function buildUrablePayload(lead: Lead): Record<string, unknown> {
+  const { firstName, lastName } = splitName(lead.name);
+  const payload: Record<string, unknown> = {
+    type: "person",
+    status: "new",
+    firstName,
+    lastName,
+    phoneNumbers: [{ label: "Mobile", value: lead.phone }],
+    origin: lead.tier ? "Website — Membership" : "Website",
+    notes: formatNote(lead),
+  };
+  if (lead.email) {
+    payload.emails = [{ label: "Home", value: lead.email }];
+  }
+  return payload;
 }
 
 export async function createOrUpdateUrableCustomer(
@@ -119,7 +144,19 @@ export async function createOrUpdateUrableCustomer(
   const base = process.env.URABLE_API_BASE_URL;
   const token = process.env.URABLE_ACCESS_TOKEN;
   if (!base || !token) {
-    throw new UrableError(0, "Missing URABLE_API_BASE_URL or URABLE_ACCESS_TOKEN");
+    // Production: hard-fail loudly so a deploy misconfiguration is visible.
+    // Non-production (dev / preview without creds): log the would-be payload
+    // and return a fake success so the UI can be exercised end-to-end
+    // without a live Urable token.
+    if (process.env.NODE_ENV === "production") {
+      throw new UrableError(0, "Missing URABLE_API_BASE_URL or URABLE_ACCESS_TOKEN");
+    }
+    const payload = buildUrablePayload(lead);
+    console.log(
+      "[urable:dev-dry-run] URABLE creds not set; skipping live call.",
+    );
+    console.log("[urable:dev-dry-run] payload:", JSON.stringify(payload, null, 2));
+    return { id: "dev-dry-run", raw: { success: true, data: { id: "dev-dry-run" } } };
   }
 
   // Endpoint + payload verified against Urable's API (May 2026). Production
@@ -129,19 +166,7 @@ export async function createOrUpdateUrableCustomer(
   // function later without changing the route handler.
   const url = `${base.replace(/\/$/, "")}/v1/customers`;
 
-  const { firstName, lastName } = splitName(lead.name);
-  const payload: Record<string, unknown> = {
-    type: "person",
-    status: "new",
-    firstName,
-    lastName,
-    phoneNumbers: [{ label: "Mobile", value: lead.phone }],
-    origin: "Website",
-    notes: formatNote(lead),
-  };
-  if (lead.email) {
-    payload.emails = [{ label: "Home", value: lead.email }];
-  }
+  const payload = buildUrablePayload(lead);
 
   const res = await fetch(url, {
     method: "POST",

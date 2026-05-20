@@ -25,6 +25,10 @@ On Vercel: **Project → Settings → Environment Variables**. Add the two Urabl
 
 > **Before launch:** the Urable endpoint in `lib/urable.ts` is a placeholder. Verify the exact endpoint and payload shape in the client's Urable API Explorer and adjust that one file. No other code needs to change.
 
+## Memberships
+
+The site does not collect payment. Monthly subscriptions are handled inside Urable via its native quote → card-on-file → recurring-billing flow. Membership leads arrive with `origin: "Website — Membership"` and a `*** MEMBERSHIP INQUIRY ***` header at the top of the customer note so the owner can spot them and create a Quote. Full owner-side workflow: [docs/membership-flow.md](docs/membership-flow.md).
+
 ## Structure
 
 - `app/page.tsx` — section order (single-page site).

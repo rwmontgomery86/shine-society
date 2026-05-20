@@ -7,11 +7,13 @@ import {
   contact,
   contactMethodOptions,
   dayOptions,
+  membershipBookingCopy,
   memberships,
   serviceOptions,
   utmKeys,
   vehicleSizes,
 } from "@/components/content/site";
+import { MembershipBanner } from "@/components/sections/MembershipBanner";
 import { trackLeadSubmitted } from "@/lib/analytics";
 import type { Attribution } from "@/lib/validate";
 
@@ -81,21 +83,49 @@ export function BookingCTA() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [tier, setTier] = useState<Tier | null>(null);
   const attributionRef = useRef<Attribution>({});
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // One-time mount-side read of the URL: capture UTM/landing/referrer into a
-    // ref, and if the membership tiles routed here with #book?tier=…, preselect
-    // Membership + record the tier. The lint rule below is suppressed because
-    // this is a legitimate "read browser-only state once on mount" pattern —
-    // we deliberately don't render this server-side, and the two setState
-    // calls run at most once (guarded by `if (t)` + the empty dep array).
+    // Mount: capture UTM/landing/referrer into a ref. Then read the URL hash
+    // for an initial tier preselection; subscribe to `hashchange` so that
+    // re-clicking a different membership tile updates this form live (the
+    // tile component pushState's the new hash + dispatches the event).
+    //
+    // After a hashchange-driven tier update (not the initial mount), we move
+    // focus to the Name input so the user lands where they need to type.
+    // Skipped on touch-primary devices to avoid surprise keyboard pop-ups.
     attributionRef.current = captureAttribution();
-    const t = parseTierFromHash(window.location.hash);
-    if (t) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTier(t);
-      setForm((f) => ({ ...f, service: "Membership" }));
-    }
+
+    const applyTier = (next: Tier | null, focusFirstField: boolean) => {
+      setTier(next);
+      setForm((f) => {
+        if (next) return { ...f, service: "Membership" };
+        // Tier cleared (e.g. via the banner's Remove button). Only revert the
+        // service field if it's still on "Membership" — don't clobber a value
+        // the user explicitly picked themselves.
+        if (f.service === "Membership") return { ...f, service: INITIAL.service };
+        return f;
+      });
+      if (focusFirstField && next && nameInputRef.current) {
+        const isTouch =
+          typeof window.matchMedia === "function" &&
+          window.matchMedia("(hover: none)").matches;
+        if (!isTouch) {
+          // preventScroll keeps the smooth-scroll initiated by the tile click
+          // from being clobbered by focus' default scroll-into-view.
+          nameInputRef.current.focus({ preventScroll: true });
+        }
+      }
+    };
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    applyTier(parseTierFromHash(window.location.hash), false);
+
+    const onHashChange = () => {
+      applyTier(parseTierFromHash(window.location.hash), true);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   const update = <K extends keyof LeadForm>(key: K, value: LeadForm[K]) => {
@@ -109,9 +139,13 @@ export function BookingCTA() {
     }
   };
 
-  const tierName = tier
-    ? (memberships.find((m) => m.id === tier)?.name ?? null)
-    : null;
+  const tierObj = tier ? (memberships.find((m) => m.id === tier) ?? null) : null;
+  const tierName = tierObj?.name ?? null;
+  // MembershipBanner has two pricing tracks: sedan vs. larger vehicles.
+  // The form supports finer-grained sizes ("Midsize SUV", "Truck", "3-row");
+  // map any non-sedan size down to "suv" for the banner's price axis.
+  const bannerVehicleSize: "sedan" | "suv" =
+    form.vehicleSize === "Sedan" ? "sedan" : "suv";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +201,15 @@ export function BookingCTA() {
         ? bookingCopy.submitSent
         : bookingCopy.submitIdle;
 
+  const successHeadline =
+    tierName
+      ? membershipBookingCopy.successHeadline.replace("{tier}", tierName)
+      : bookingCopy.successHeadline;
+  const successBody =
+    tierName
+      ? membershipBookingCopy.successBody.replace("{tier}", tierName)
+      : bookingCopy.successBody;
+
   return (
     <section className="ss-book" id="book">
       <div className="ss-book__bg" aria-hidden="true">
@@ -200,17 +243,33 @@ export function BookingCTA() {
             role="status"
             aria-live="polite"
           >
-            <h3 className="ss-book__success-title">
-              {bookingCopy.successHeadline}
-            </h3>
-            <p className="ss-book__success-body">{bookingCopy.successBody}</p>
+            <h3 className="ss-book__success-title">{successHeadline}</h3>
+            <p className="ss-book__success-body">{successBody}</p>
           </div>
         ) : (
           <form className="ss-book__form" onSubmit={onSubmit} noValidate>
+            {tierObj && (
+              <div className="ss-book__member-banner">
+                <MembershipBanner
+                  tier={tierObj}
+                  vehicleSize={bannerVehicleSize}
+                  onRemove={() => {
+                    // Strip the ?tier=… from the URL and notify listeners.
+                    // The hashchange handler does the heavy lifting: it
+                    // clears `tier`, reverts `service` if still Membership,
+                    // and the Memberships tile highlight deselects.
+                    history.replaceState(null, "", "#book");
+                    window.dispatchEvent(new Event("hashchange"));
+                  }}
+                />
+              </div>
+            )}
+
             <div className="ss-field">
               <label htmlFor="bk-name">{bookingFieldLabels.name.label}</label>
               <input
                 id="bk-name"
+                ref={nameInputRef}
                 type="text"
                 placeholder={bookingFieldLabels.name.placeholder}
                 autoComplete="name"
