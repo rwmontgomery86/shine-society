@@ -231,7 +231,7 @@
   filter: brightness(1.1);
   pointer-events: none;
   /* Crop hard. The car silhouette is in the top third of the original art;
-     the "Shine Society" wordmark sits below it. Fully opaque only through
+     the "Shine Society Detailing" wordmark sits below it. Fully opaque only through
      the car, then fade to transparent before the wordmark area. */
   mask-image: linear-gradient(180deg, black 0%, black 22%, transparent 38%);
   -webkit-mask-image: linear-gradient(180deg, black 0%, black 22%, transparent 38%);

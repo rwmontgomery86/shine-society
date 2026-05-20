@@ -8,7 +8,7 @@ export function Footer() {
         <div className="ss-foot__brand">
           <Image
             src="/shine-society-logo.png"
-            alt="Shine Society"
+            alt="Shine Society Detailing"
             width={64}
             height={64}
           />
@@ -49,7 +49,7 @@ export function Footer() {
         </div>
       </div>
       <div className="ss-foot__bottom">
-        <span>© 2026 Shine Society. All rights reserved.</span>
+        <span>© 2026 Shine Society Detailing. All rights reserved.</span>
         <span>Mobile service — we come to you.</span>
       </div>
     </footer>

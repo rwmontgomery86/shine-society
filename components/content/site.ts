@@ -234,7 +234,7 @@ export const cities: City[] = [
 
 export const aboutCopy = {
   body: [
-    "At Shine Society, we specialize in bringing vehicles back to life with professional mobile detailing services you can trust. Based in Senoia, GA, we proudly serve Senoia and the surrounding Central Georgia areas with convenience, quality, and attention to detail that stands out.",
+    "At Shine Society Detailing, we specialize in bringing vehicles back to life with professional mobile detailing services you can trust. Based in Senoia, GA, we proudly serve Senoia and the surrounding Central Georgia areas with convenience, quality, and attention to detail that stands out.",
     "We're not just here to clean your vehicle — we're here to restore, protect, and elevate it.",
     "From deep interior detailing and pet hair removal to exterior detailing, paint correction, and ceramic coating, every service is performed with precision and care. Whether your vehicle needs a quick refresh or a full transformation, we treat every job like it's our own.",
   ],

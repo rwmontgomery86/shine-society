@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# Shine Society — marketing site
+# Shine Society Detailing — marketing site
 
-Production Next.js build for **Shine Society**, a 1-year-old mobile car detailing business in Senoia, GA serving Central Georgia (40-mile radius). Owner: **706-938-8694**. The site is a single-page marketing site with mocked booking + membership flows; CMS / Stripe wiring is phase 2.
+Production Next.js build for **Shine Society Detailing**, a 1-year-old mobile car detailing business in Senoia, GA serving Central Georgia (40-mile radius). Owner: **706-938-8694**. The site is a single-page marketing site with mocked booking + membership flows; CMS / Stripe wiring is phase 2.
 
 ## Project structure
 
@@ -23,7 +23,7 @@ Production Next.js build for **Shine Society**, a 1-year-old mobile car detailin
 - **All copy lives in `components/content/site.ts`** — services, memberships, FAQ, testimonials, hero copy, marquee items, contact info, vehicle sizes. Don't hardcode copy in component files; add a field here and import.
 - **`app/prototype.css`** is the original Claude Design CSS, imported into `globals.css`. Treat it as the design system — tweaks for new components or overrides go in `globals.css` *after* the prototype import.
 - **Cream tone** is applied by wrapping a section in `<div className="ss-tone ss-tone--cream">…</div>` in `app/page.tsx`. Currently wraps Services, Process, About.
-- Sections use the `ss-*` class prefix (Shine Society) from the prototype CSS — don't rename.
+- Sections use the `ss-*` class prefix (Shine Society Detailing — preserved from original prototype) from the prototype CSS — don't rename.
 - Section order in `app/page.tsx` is the canonical layout. Adding a section means inserting a `<Component />` at the right slot, not a separate route.
 
 ## Intentionally mocked — do NOT wire a backend without asking

@@ -19,13 +19,13 @@ export function ShineNav() {
       <a className="ss-nav__brand" href="#top">
         <Image
           src="/shine-society-logo.png"
-          alt="Shine Society"
+          alt="Shine Society Detailing"
           width={44}
           height={44}
           priority
         />
         <span className="ss-nav__wordmark">
-          <em>Shine</em> Society
+          <em>Shine</em> Society Detailing
           <small>Mobile Detailing · Senoia, GA</small>
         </span>
       </a>

@@ -7,7 +7,7 @@ export function FullBleedBreak() {
         <p className="ss-break__quote">
           &ldquo;We treat every job <em>like it&rsquo;s our own</em> — no shortcuts, only thorough, high-quality work.&rdquo;
         </p>
-        <span className="ss-break__cite">— Shine Society, Senoia GA</span>
+        <span className="ss-break__cite">— Shine Society Detailing, Senoia GA</span>
       </div>
     </section>
   );

@@ -27,22 +27,22 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
-  title: "Shine Society — Mobile Car Detailing in Senoia, GA",
+  title: "Shine Society Detailing — Senoia, GA",
   description:
     "Mobile detailing built on convenience, quality, and attention to detail. Restored, protected, elevated — without leaving your driveway. Serving Senoia, Newnan, Peachtree City, Fayetteville & Griffin.",
   openGraph: {
-    title: "Shine Society — Mobile Car Detailing",
+    title: "Shine Society Detailing",
     description:
       "Mobile detailing in Senoia, GA. Ceramic coating, paint correction, and full-service interior & exterior detail — we come to you.",
     url: "/",
-    siteName: "Shine Society",
+    siteName: "Shine Society Detailing",
     images: [{ url: "/hero.jpg", width: 1024, height: 1536 }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shine Society — Mobile Car Detailing",
+    title: "Shine Society Detailing",
     description:
       "Mobile detailing in Senoia, GA. We come to you.",
     images: ["/hero.jpg"],
