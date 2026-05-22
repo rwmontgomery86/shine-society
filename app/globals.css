@@ -419,6 +419,116 @@
   grid-column: span 2;
 }
 
+/* ===== Booking picker (replaces the form in default mode) ===== */
+.ss-book__picker-fine {
+  margin: 20px 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+  max-width: 460px;
+}
+.ss-pick {
+  display: grid;
+  gap: 18px;
+}
+.ss-pick__card {
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-lg);
+  padding: 26px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.ss-pick__card:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+}
+.ss-pick__head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.ss-pick__num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  font-weight: 700;
+}
+.ss-pick__head-text {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ss-pick__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: 0.01em;
+  margin: 0;
+  color: var(--ink);
+}
+.ss-pick__price {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.ss-pick__blurb {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.ss-pick__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.ss-pick__list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--ink-dim);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.ss-pick__list li svg {
+  color: var(--accent);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-pick__card:hover { transform: none; }
+}
+
+/* ===== "Booking a one-time detail instead?" link inside the membership form ===== */
+.ss-book__back {
+  grid-column: span 2;
+  margin: -6px 0 0;
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  transition: color 0.18s ease;
+}
+.ss-book__back:hover { color: var(--accent); }
+
 /* ===== Membership tier — selected state ===== */
 .ss-tier.is-selected {
   border-color: var(--accent);

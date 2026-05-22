@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "shine-society-dev",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "PORT=3030 npm run dev"],
+      "port": 3030
+    }
+  ]
+}

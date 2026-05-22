@@ -1,8 +1,5 @@
 import {
   bookingErrorMessages,
-  contactMethodOptions,
-  dayOptions,
-  serviceOptions,
   utmKeys,
   vehicleSizes,
 } from "@/components/content/site";
@@ -10,6 +7,8 @@ import {
 export type Attribution = Partial<
   Record<(typeof utmKeys)[number] | "referrer" | "landing_page", string>
 >;
+
+export type Tier = "essential" | "premium" | "elite";
 
 export type Lead = {
   name: string;
@@ -20,11 +19,8 @@ export type Lead = {
   vehicleYear?: string;
   vehicleMake?: string;
   vehicleModel?: string;
-  service: (typeof serviceOptions)[number];
-  day: (typeof dayOptions)[number];
-  contactMethod: (typeof contactMethodOptions)[number];
   notes?: string;
-  tier?: "essential" | "premium" | "elite";
+  tier: Tier;
   attribution: Attribution;
   submittedAt: string;
 };
@@ -103,37 +99,15 @@ export function validateLead(input: unknown): ValidateResult {
   const vehicleMake = trimStr(input.vehicleMake, 40);
   const vehicleModel = trimStr(input.vehicleModel, 40);
 
-  const service = trimStr(input.service, 40) as
-    | (typeof serviceOptions)[number]
-    | undefined;
-  if (!service || !(serviceOptions as readonly string[]).includes(service)) {
-    errors.service = bookingErrorMessages.serviceRequired;
-  }
-
-  const day = trimStr(input.day, 20) as (typeof dayOptions)[number] | undefined;
-  if (!day || !(dayOptions as readonly string[]).includes(day)) {
-    errors.day = bookingErrorMessages.dayRequired;
-  }
-
-  const contactMethod = trimStr(input.contactMethod, 10) as
-    | (typeof contactMethodOptions)[number]
-    | undefined;
-  if (
-    !contactMethod ||
-    !(contactMethodOptions as readonly string[]).includes(contactMethod)
-  ) {
-    errors.contactMethod = bookingErrorMessages.contactMethodRequired;
-  } else if (contactMethod === "Email" && !email) {
-    errors.email = bookingErrorMessages.emailRequiredForContact;
-  }
-
   const notes = trimStr(input.notes, 1000);
 
   const rawTier = trimStr(input.tier, 10);
-  const tier =
-    rawTier && (TIERS as readonly string[]).includes(rawTier)
-      ? (rawTier as (typeof TIERS)[number])
-      : undefined;
+  let tier: Tier | undefined;
+  if (rawTier && (TIERS as readonly string[]).includes(rawTier)) {
+    tier = rawTier as Tier;
+  } else {
+    errors.tier = bookingErrorMessages.tierRequired;
+  }
 
   const attribution = coerceAttribution(input.attribution);
 
@@ -158,11 +132,8 @@ export function validateLead(input: unknown): ValidateResult {
       vehicleYear,
       vehicleMake,
       vehicleModel,
-      service: service!,
-      day: day!,
-      contactMethod: contactMethod!,
       notes,
-      tier,
+      tier: tier!,
       attribution,
       submittedAt,
     },

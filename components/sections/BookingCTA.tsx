@@ -1,57 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  bookingCopy,
-  bookingFieldLabels,
+  bookingPickerCopy,
   contact,
-  contactMethodOptions,
-  dayOptions,
-  membershipBookingCopy,
-  memberships,
-  serviceOptions,
-  utmKeys,
-  vehicleSizes,
+  membershipFormCopy,
 } from "@/components/content/site";
-import { MembershipBanner } from "@/components/sections/MembershipBanner";
-import { trackLeadSubmitted } from "@/lib/analytics";
-import type { Attribution } from "@/lib/validate";
-
-type Tier = "essential" | "premium" | "elite";
-
-type LeadForm = {
-  name: string;
-  phone: string;
-  email: string;
-  city: string;
-  vehicleSize: (typeof vehicleSizes)[number];
-  vehicleYear: string;
-  vehicleMake: string;
-  vehicleModel: string;
-  service: (typeof serviceOptions)[number];
-  day: (typeof dayOptions)[number];
-  contactMethod: (typeof contactMethodOptions)[number];
-  notes: string;
-  companyWebsite: string; // honeypot
-};
-
-type Status = "idle" | "sending" | "success" | "error";
-
-const INITIAL: LeadForm = {
-  name: "",
-  phone: "",
-  email: "",
-  city: "",
-  vehicleSize: "Sedan",
-  vehicleYear: "",
-  vehicleMake: "",
-  vehicleModel: "",
-  service: "Inside & Out",
-  day: "This week",
-  contactMethod: "Text",
-  notes: "",
-  companyWebsite: "",
-};
+import { BookingPicker } from "@/components/sections/BookingPicker";
+import { MembershipBookingForm } from "@/components/sections/MembershipBookingForm";
+import type { Tier } from "@/lib/validate";
 
 const TIERS: ReadonlySet<Tier> = new Set(["essential", "premium", "elite"]);
 
@@ -64,151 +21,31 @@ function parseTierFromHash(hash: string): Tier | null {
   return t && TIERS.has(t as Tier) ? (t as Tier) : null;
 }
 
-function captureAttribution(): Attribution {
-  if (typeof window === "undefined") return {};
-  const search = new URLSearchParams(window.location.search);
-  const out: Attribution = {};
-  for (const key of utmKeys) {
-    const v = search.get(key);
-    if (v) out[key] = v;
-  }
-  if (document.referrer) out.referrer = document.referrer;
-  out.landing_page = window.location.href;
-  return out;
-}
-
 export function BookingCTA() {
-  const [form, setForm] = useState<LeadForm>(INITIAL);
-  const [status, setStatus] = useState<Status>("idle");
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [tier, setTier] = useState<Tier | null>(null);
-  const attributionRef = useRef<Attribution>({});
-  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Mount: capture UTM/landing/referrer into a ref. Then read the URL hash
-    // for an initial tier preselection; subscribe to `hashchange` so that
-    // re-clicking a different membership tile updates this form live (the
-    // tile component pushState's the new hash + dispatches the event).
-    //
-    // After a hashchange-driven tier update (not the initial mount), we move
-    // focus to the Name input so the user lands where they need to type.
-    // Skipped on touch-primary devices to avoid surprise keyboard pop-ups.
-    attributionRef.current = captureAttribution();
-
-    const applyTier = (next: Tier | null, focusFirstField: boolean) => {
-      setTier(next);
-      setForm((f) => {
-        if (next) return { ...f, service: "Membership" };
-        // Tier cleared (e.g. via the banner's Remove button). Only revert the
-        // service field if it's still on "Membership" — don't clobber a value
-        // the user explicitly picked themselves.
-        if (f.service === "Membership") return { ...f, service: INITIAL.service };
-        return f;
-      });
-      if (focusFirstField && next && nameInputRef.current) {
-        const isTouch =
-          typeof window.matchMedia === "function" &&
-          window.matchMedia("(hover: none)").matches;
-        if (!isTouch) {
-          // preventScroll keeps the smooth-scroll initiated by the tile click
-          // from being clobbered by focus' default scroll-into-view.
-          nameInputRef.current.focus({ preventScroll: true });
-        }
-      }
-    };
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    applyTier(parseTierFromHash(window.location.hash), false);
-
-    const onHashChange = () => {
-      applyTier(parseTierFromHash(window.location.hash), true);
-    };
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    const read = () => setTier(parseTierFromHash(window.location.hash));
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
   }, []);
 
-  const update = <K extends keyof LeadForm>(key: K, value: LeadForm[K]) => {
-    setForm((f) => ({ ...f, [key]: value }));
-    if (errors[key as string]) {
-      setErrors((e) => {
-        const next = { ...e };
-        delete next[key as string];
-        return next;
-      });
-    }
+  const switchToPicker = () => {
+    // Drop the ?tier=… from the URL and notify other listeners (e.g. the
+    // Memberships section deselects its highlighted tile). The hashchange
+    // handler above will set tier to null and re-render the picker.
+    history.replaceState(null, "", "#book");
+    window.dispatchEvent(new Event("hashchange"));
   };
 
-  const tierObj = tier ? (memberships.find((m) => m.id === tier) ?? null) : null;
-  const tierName = tierObj?.name ?? null;
-  // MembershipBanner has two pricing tracks: sedan vs. larger vehicles.
-  // The form supports finer-grained sizes ("Midsize SUV", "Truck", "3-row");
-  // map any non-sedan size down to "suv" for the banner's price axis.
-  const bannerVehicleSize: "sedan" | "suv" =
-    form.vehicleSize === "Sedan" ? "sedan" : "suv";
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (status === "sending" || status === "success") return;
-
-    setStatus("sending");
-    setErrors({});
-
-    try {
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          tier,
-          attribution: attributionRef.current,
-          submittedAt: new Date().toISOString(),
-        }),
-      });
-
-      let payload: { success?: boolean; errors?: Record<string, string> } = {};
-      try {
-        payload = await res.json();
-      } catch {
-        /* ignore non-JSON */
-      }
-
-      if (res.status === 422 && payload.errors) {
-        setErrors(payload.errors);
-        setStatus("idle");
-        return;
-      }
-      if (!res.ok || !payload.success) {
-        setStatus("error");
-        return;
-      }
-
-      setStatus("success");
-      trackLeadSubmitted({
-        service: form.service,
-        vehicleSize: form.vehicleSize,
-        tier,
-      });
-    } catch {
-      setStatus("error");
-    }
-  };
-
-  const submitLabel =
-    status === "sending"
-      ? bookingCopy.submitSending
-      : status === "success"
-        ? bookingCopy.submitSent
-        : bookingCopy.submitIdle;
-
-  const successHeadline =
-    tierName
-      ? membershipBookingCopy.successHeadline.replace("{tier}", tierName)
-      : bookingCopy.successHeadline;
-  const successBody =
-    tierName
-      ? membershipBookingCopy.successBody.replace("{tier}", tierName)
-      : bookingCopy.successBody;
+  const inMembershipMode = tier !== null;
+  const kicker = inMembershipMode
+    ? membershipFormCopy.kicker
+    : bookingPickerCopy.kicker;
+  const leadParagraph = inMembershipMode
+    ? membershipFormCopy.leadParagraph
+    : bookingPickerCopy.leadParagraph;
 
   return (
     <section className="ss-book" id="book">
@@ -217,14 +54,11 @@ export function BookingCTA() {
       </div>
       <div className="ss-book__inner">
         <div className="ss-book__copy">
-          <span className="ss-book__kicker">— Ready to book?</span>
+          <span className="ss-book__kicker">{kicker}</span>
           <h2 className="ss-book__title">
             Park it. <em>We&rsquo;ll handle the rest.</em>
           </h2>
-          <p>
-            {bookingCopy.leadParagraph} Lead time is{" "}
-            {contact.leadTime.toLowerCase()}.
-          </p>
+          <p>{leadParagraph}</p>
           <div className="ss-book__contact">
             <a href={contact.phoneTel}>
               <span>Call or text</span>
@@ -235,288 +69,18 @@ export function BookingCTA() {
               <strong>{contact.hoursShort}</strong>
             </span>
           </div>
+          {!inMembershipMode && (
+            <p className="ss-book__picker-fine">{bookingPickerCopy.fine}</p>
+          )}
         </div>
 
-        {status === "success" ? (
-          <div
-            className="ss-book__form ss-book__form--done"
-            role="status"
-            aria-live="polite"
-          >
-            <h3 className="ss-book__success-title">{successHeadline}</h3>
-            <p className="ss-book__success-body">{successBody}</p>
-          </div>
+        {inMembershipMode ? (
+          <MembershipBookingForm
+            tier={tier}
+            onSwitchToPicker={switchToPicker}
+          />
         ) : (
-          <form className="ss-book__form" onSubmit={onSubmit} noValidate>
-            {tierObj && (
-              <div className="ss-book__member-banner">
-                <MembershipBanner
-                  tier={tierObj}
-                  vehicleSize={bannerVehicleSize}
-                  onRemove={() => {
-                    // Strip the ?tier=… from the URL and notify listeners.
-                    // The hashchange handler does the heavy lifting: it
-                    // clears `tier`, reverts `service` if still Membership,
-                    // and the Memberships tile highlight deselects.
-                    history.replaceState(null, "", "#book");
-                    window.dispatchEvent(new Event("hashchange"));
-                  }}
-                />
-              </div>
-            )}
-
-            <div className="ss-field">
-              <label htmlFor="bk-name">{bookingFieldLabels.name.label}</label>
-              <input
-                id="bk-name"
-                ref={nameInputRef}
-                type="text"
-                placeholder={bookingFieldLabels.name.placeholder}
-                autoComplete="name"
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-                aria-invalid={Boolean(errors.name)}
-                aria-describedby={errors.name ? "bk-name-err" : undefined}
-              />
-              {errors.name && (
-                <p className="ss-field__err" id="bk-name-err" aria-live="polite">
-                  {errors.name}
-                </p>
-              )}
-            </div>
-
-            <div className="ss-field">
-              <label htmlFor="bk-phone">{bookingFieldLabels.phone.label}</label>
-              <input
-                id="bk-phone"
-                type="tel"
-                placeholder={bookingFieldLabels.phone.placeholder}
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
-                aria-invalid={Boolean(errors.phone)}
-                aria-describedby={errors.phone ? "bk-phone-err" : undefined}
-              />
-              {errors.phone && (
-                <p className="ss-field__err" id="bk-phone-err" aria-live="polite">
-                  {errors.phone}
-                </p>
-              )}
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label htmlFor="bk-email">{bookingFieldLabels.email.label}</label>
-              <input
-                id="bk-email"
-                type="email"
-                placeholder={bookingFieldLabels.email.placeholder}
-                autoComplete="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                aria-invalid={Boolean(errors.email)}
-                aria-describedby={errors.email ? "bk-email-err" : undefined}
-              />
-              {errors.email && (
-                <p className="ss-field__err" id="bk-email-err" aria-live="polite">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label htmlFor="bk-city">{bookingFieldLabels.city.label}</label>
-              <input
-                id="bk-city"
-                type="text"
-                placeholder={bookingFieldLabels.city.placeholder}
-                autoComplete="address-level2"
-                value={form.city}
-                onChange={(e) => update("city", e.target.value)}
-              />
-            </div>
-
-            <div className="ss-book__triple">
-              <div className="ss-field">
-                <label htmlFor="bk-year">
-                  {bookingFieldLabels.vehicleYear.label}
-                </label>
-                <input
-                  id="bk-year"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder={bookingFieldLabels.vehicleYear.placeholder}
-                  value={form.vehicleYear}
-                  onChange={(e) => update("vehicleYear", e.target.value)}
-                  aria-invalid={Boolean(errors.vehicleYear)}
-                  aria-describedby={
-                    errors.vehicleYear ? "bk-year-err" : undefined
-                  }
-                />
-                {errors.vehicleYear && (
-                  <p className="ss-field__err" id="bk-year-err" aria-live="polite">
-                    {errors.vehicleYear}
-                  </p>
-                )}
-              </div>
-              <div className="ss-field">
-                <label htmlFor="bk-make">
-                  {bookingFieldLabels.vehicleMake.label}
-                </label>
-                <input
-                  id="bk-make"
-                  type="text"
-                  placeholder={bookingFieldLabels.vehicleMake.placeholder}
-                  value={form.vehicleMake}
-                  onChange={(e) => update("vehicleMake", e.target.value)}
-                />
-              </div>
-              <div className="ss-field">
-                <label htmlFor="bk-model">
-                  {bookingFieldLabels.vehicleModel.label}
-                </label>
-                <input
-                  id="bk-model"
-                  type="text"
-                  placeholder={bookingFieldLabels.vehicleModel.placeholder}
-                  value={form.vehicleModel}
-                  onChange={(e) => update("vehicleModel", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label>Vehicle size</label>
-              <div className="ss-seg" role="radiogroup" aria-label="Vehicle size">
-                {vehicleSizes.map((o) => (
-                  <button
-                    type="button"
-                    key={o}
-                    role="radio"
-                    aria-checked={form.vehicleSize === o}
-                    className={form.vehicleSize === o ? "is-on" : ""}
-                    onClick={() => update("vehicleSize", o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label>Service</label>
-              <div className="ss-seg" role="radiogroup" aria-label="Service">
-                {serviceOptions.map((o) => (
-                  <button
-                    type="button"
-                    key={o}
-                    role="radio"
-                    aria-checked={form.service === o}
-                    className={form.service === o ? "is-on" : ""}
-                    onClick={() => update("service", o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-              {tierName && (
-                <span className="ss-book__tier-chip">
-                  {bookingCopy.tierChipPrefix} {tierName}
-                </span>
-              )}
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label>When</label>
-              <div className="ss-seg" role="radiogroup" aria-label="When">
-                {dayOptions.map((o) => (
-                  <button
-                    type="button"
-                    key={o}
-                    role="radio"
-                    aria-checked={form.day === o}
-                    className={form.day === o ? "is-on" : ""}
-                    onClick={() => update("day", o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label>Preferred contact</label>
-              <div
-                className="ss-seg"
-                role="radiogroup"
-                aria-label="Preferred contact"
-              >
-                {contactMethodOptions.map((o) => (
-                  <button
-                    type="button"
-                    key={o}
-                    role="radio"
-                    aria-checked={form.contactMethod === o}
-                    className={form.contactMethod === o ? "is-on" : ""}
-                    onClick={() => update("contactMethod", o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="ss-field ss-field--wide">
-              <label htmlFor="bk-notes">{bookingFieldLabels.notes.label}</label>
-              <textarea
-                id="bk-notes"
-                placeholder={bookingFieldLabels.notes.placeholder}
-                rows={3}
-                value={form.notes}
-                onChange={(e) => update("notes", e.target.value)}
-              />
-            </div>
-
-            {/* Honeypot — visually hidden, off-screen, not display:none so bots fill it. */}
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                left: "-10000px",
-                top: "auto",
-                width: 1,
-                height: 1,
-                overflow: "hidden",
-              }}
-            >
-              <label htmlFor="bk-website">Company website</label>
-              <input
-                id="bk-website"
-                type="text"
-                name="companyWebsite"
-                tabIndex={-1}
-                autoComplete="off"
-                value={form.companyWebsite}
-                onChange={(e) => update("companyWebsite", e.target.value)}
-              />
-            </div>
-
-            {status === "error" && (
-              <div className="ss-book__alert" role="alert" aria-live="assertive">
-                <strong>{bookingCopy.errorHeadline}</strong>
-                <p>{bookingCopy.errorBody}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="ss-btn ss-btn--solid ss-btn--lg ss-btn--block"
-              disabled={status === "sending"}
-            >
-              {submitLabel}
-            </button>
-            <p className="ss-book__fine">{bookingCopy.finePrint}</p>
-          </form>
+          <BookingPicker />
         )}
       </div>
     </section>

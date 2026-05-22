@@ -11,9 +11,11 @@ export class UrableError extends Error {
   }
 }
 
-function tierName(tier: Lead["tier"]): string | undefined {
-  if (!tier) return undefined;
-  return memberships.find((m) => m.id === tier)?.name;
+function tierName(tier: Lead["tier"]): string {
+  // `validateLead` guarantees tier is one of essential/premium/elite, all of
+  // which exist in `memberships`. Fall back to the raw id only to satisfy
+  // TS in the unreachable case.
+  return memberships.find((m) => m.id === tier)?.name ?? tier;
 }
 
 function vehicleYMM(lead: Lead): string | undefined {
@@ -53,7 +55,6 @@ function buildSections(lead: Lead): Section[] {
       .map(([k, v]) => `${k}: ${v!.trim()}`);
 
   const ymm = vehicleYMM(lead);
-  const t = tierName(lead.tier);
 
   const sections: Section[] = [
     { heading: "Website Lead - Shine Society", lines: [] },
@@ -63,7 +64,6 @@ function buildSections(lead: Lead): Section[] {
         ["Name", lead.name],
         ["Phone", lead.phone],
         ["Email", lead.email],
-        ["Preferred contact", lead.contactMethod],
         ["City/ZIP", lead.city],
       ]),
     },
@@ -77,16 +77,14 @@ function buildSections(lead: Lead): Section[] {
     {
       heading: "Request:",
       lines: lines([
-        ["Service", lead.service],
-        ["Preferred timing", lead.day],
-        ["Tier", t],
+        ["Tier", tierName(lead.tier)],
         ["Message", lead.notes],
       ]),
     },
     {
       heading: "Marketing Attribution:",
       lines: lines([
-        ["Source", "Website form"],
+        ["Source", "Website membership form"],
         ["Landing page", lead.attribution.landing_page],
         ["Referrer", lead.attribution.referrer],
         ["UTM Source", lead.attribution.utm_source],
@@ -112,13 +110,10 @@ export function formatNote(lead: Lead): string {
     .map((s) => (s.lines.length ? [s.heading, ...s.lines].join("\n") : s.heading))
     .join("\n\n");
 
-  const t = tierName(lead.tier);
-  if (!t) return body;
-
   // Surface membership intent at the very top of the note so the owner spots
   // it the instant they open the customer in Urable and knows to create a
   // Quote (not just schedule a one-off detail).
-  return `*** MEMBERSHIP INQUIRY — ${t} ***\n\n${body}`;
+  return `*** MEMBERSHIP INQUIRY — ${tierName(lead.tier)} ***\n\n${body}`;
 }
 
 function buildUrablePayload(lead: Lead): Record<string, unknown> {
@@ -129,7 +124,7 @@ function buildUrablePayload(lead: Lead): Record<string, unknown> {
     firstName,
     lastName,
     phoneNumbers: [{ label: "Mobile", value: lead.phone }],
-    origin: lead.tier ? "Website — Membership" : "Website",
+    origin: "Website — Membership",
     notes: formatNote(lead),
   };
   if (lead.email) {

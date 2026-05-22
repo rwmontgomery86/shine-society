@@ -194,7 +194,7 @@ export const processSteps = [
   {
     n: "01",
     t: "Book online or text",
-    d: "Call or text 706-938-8694, or send the booking form. We'll reply within an hour during business hours.",
+    d: "Pick a service online, or call/text 706-938-8694. We'll reply within an hour during business hours.",
   },
   {
     n: "02",
@@ -270,7 +270,7 @@ export const faqs: Faq[] = [
   },
   {
     q: "Do you do fleets or commercial vehicles?",
-    a: "Yes — custom quote. Use the booking form below or call directly.",
+    a: "Yes — custom quote. Call or text 706-938-8694 to scope the job.",
   },
   {
     q: "What do you need from my driveway?",
@@ -309,18 +309,6 @@ export const vehicleSizes = [
   "3-row",
 ] as const;
 
-export const serviceOptions = [
-  "Exterior",
-  "Interior",
-  "Inside & Out",
-  "Membership",
-  "Ceramic / Correction",
-] as const;
-
-export const dayOptions = ["This week", "Next week", "Flexible"] as const;
-
-export const contactMethodOptions = ["Text", "Call", "Email"] as const;
-
 export const utmKeys = [
   "utm_source",
   "utm_medium",
@@ -331,29 +319,95 @@ export const utmKeys = [
   "fbclid",
 ] as const;
 
-export const bookingCopy = {
+// One-time detailing, ceramic, and paint correction bookings happen on
+// Urable's hosted virtual-shop pages — one URL per category. These are
+// public URLs (shown to anyone clicking the "Book" CTA) so we hardcode
+// them here rather than treat them as secrets.
+export type BookingOption = {
+  id: "detailing" | "ceramic" | "paint-correction";
+  n: string;
+  title: string;
+  blurb: string;
+  priceFrom: string;
+  included: string[];
+  urableUrl: string;
+};
+
+export const bookingOptions: BookingOption[] = [
+  {
+    id: "detailing",
+    n: "01",
+    title: "Detailing Services",
+    blurb:
+      "Exterior, interior, or the full inside & out. Pricing by vehicle size — pick your slot in a few clicks.",
+    priceFrom: "from $150",
+    included: [
+      "Exterior · Interior · Inside & Out",
+      "Live pricing per vehicle size",
+      "Pick a date + time at checkout",
+    ],
+    urableUrl:
+      "https://app.urable.com/virtual-shop/SSf5ARzQCjpDT2k96hYK/ltc85r0H6FrAMWP5J9Lu",
+  },
+  {
+    id: "ceramic",
+    n: "02",
+    title: "Ceramic Coating",
+    blurb:
+      "1, 3, or 5-year protection — prep, paint correction, and curing all included. 10% deposit at booking.",
+    priceFrom: "from $429",
+    included: [
+      "1, 3, and 5-year options",
+      "Full prep + decontamination",
+      "Hydrophobic, UV-stable finish",
+    ],
+    urableUrl:
+      "https://app.urable.com/virtual-shop/SSf5ARzQCjpDT2k96hYK/j1dnu8cjhqVC3L5PN7eR",
+  },
+  {
+    id: "paint-correction",
+    n: "03",
+    title: "Paint Correction",
+    blurb:
+      "Single-stage enhancement up to multi-stage correction — restore the gloss before a coating.",
+    priceFrom: "from $299",
+    included: [
+      "Level 1 · 2 · 3 options",
+      "Swirl + scratch removal",
+      "Pairs with ceramic for a full reset",
+    ],
+    urableUrl:
+      "https://app.urable.com/virtual-shop/SSf5ARzQCjpDT2k96hYK/aoVYIXXU8uWfK3psgwwi",
+  },
+];
+
+export const bookingPickerCopy = {
+  kicker: "— Pick a service",
   leadParagraph:
-    "Tell us a little about your ride. We’ll text you back with a slot — usually within an hour during business hours.",
-  finePrint:
-    "By submitting, you agree to receive a text reply at the number above. 24-hour notice for reschedules; same-day cancellations may forfeit the 10% deposit on ceramic / paint correction work.",
-  submitIdle: "Request a slot →",
-  submitSending: "Sending…",
-  submitSent: "✓ Request received",
-  successHeadline: "Got it — talk soon.",
-  successBody:
-    "We’ll text you shortly to confirm details and availability. If you don’t hear back within an hour during business hours, call or text 706-938-8694.",
-  errorHeadline: "Something went wrong.",
-  errorBody:
-    "Your request didn’t go through. Please try again, or text/call 706-938-8694 directly.",
-  tierChipPrefix: "Tier:",
+    "Choose a category to see live pricing and pick a slot — booking opens in our scheduling tool. Fleet or commercial? Call or text directly.",
+  ctaLabel: "Book online →",
+  fine: "Bookings open in a new tab. Need help choosing? Call or text 706-938-8694.",
 } as const;
 
-// Copy shown only when a membership tier is preselected (booking form arrived
-// via #book?tier=…). Payment is not collected on the site — Urable handles
-// the quote → card-on-file → recurring billing flow after the first detail.
-// `{tier}` is replaced with the tier display name (e.g., "Premium").
-// (The in-form notice is now the receipt-style MembershipBanner component;
-// these strings drive the post-submit success state copy.)
+export const membershipFormCopy = {
+  kicker: "— Start your membership",
+  leadParagraph:
+    "Tell us about your ride. We’ll text to confirm your first “Reset” detail — after that visit, we’ll send a quote in Urable to set up your card on file and start monthly auto-pay.",
+  finePrint:
+    "By submitting, you agree to receive a text reply at the number above. Full “Reset” detail required to start; 30-day cancellation notice; auto-pay activates after your first detail.",
+  submitIdle: "Start membership →",
+  submitSending: "Sending…",
+  submitSent: "✓ Request received",
+  errorHeadline: "Something went wrong.",
+  errorBody:
+    "Your request didn’t go through. Please try again, or text/call 706-938-8694.",
+  backLinkLabel: "Booking a one-time detail instead?",
+} as const;
+
+// Copy shown after a successful membership submission. `{tier}` is replaced
+// with the tier display name (e.g., "Premium"). Payment is not collected on
+// the site — Urable handles the quote → card-on-file → recurring billing flow
+// after the first detail.
 export const membershipBookingCopy = {
   successHeadline: "Got it — welcome to the {tier} plan.",
   successBody:
@@ -371,7 +425,7 @@ export const bookingFieldLabels = {
   notes: {
     label: "Anything else?",
     placeholder:
-      "Pets? Pet hair? Tar? Headlights cloudy? Tell us what we’re walking into.",
+      "Pets? Pet hair? Coatings already on the paint? Anything we should know.",
   },
 } as const;
 
@@ -380,11 +434,8 @@ export const bookingErrorMessages = {
   phoneRequired: "We need a phone number to text you back.",
   phoneInvalid: "That phone number doesn’t look right.",
   emailInvalid: "That email doesn’t look right.",
-  emailRequiredForContact: "Add an email if you’d prefer email contact.",
   vehicleSizeRequired: "Pick a vehicle size.",
-  serviceRequired: "Pick a service.",
-  dayRequired: "Pick a timing window.",
-  contactMethodRequired: "Pick a contact method.",
   vehicleYearInvalid: "Use a 4-digit year.",
+  tierRequired: "Pick a membership tier.",
   generic: "Please check the highlighted fields.",
 } as const;
